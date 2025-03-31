@@ -1,0 +1,3 @@
+CREATE USER IF NOT EXISTS 'user'@'%' IDENTIFIED BY 'p@ssword123!';
+GRANT ALL PRIVILEGES ON products_db.* TO 'user'@'%';
+FLUSH PRIVILEGES;
