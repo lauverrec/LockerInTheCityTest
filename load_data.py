@@ -24,7 +24,7 @@ for product in products.itertuples():
 
     if response.status_code == 400:
         print(f"The product already exists: {product.brand} {product.product_type}")
-    elif response.status_code == 201:
+    elif response.status_code == 200:
         print(f"Product added: {product.brand} {product.product_type}")
     else:
         print(f"An error occurred when adding product: {response.text}")
@@ -46,7 +46,7 @@ for store in stores.itertuples():
 
     if response.status_code == 400:
         print(f"The store already exists: {store.name} en {store.city}")
-    elif response.status_code == 201:
+    elif response.status_code == 200:
         print(f"Store added: {store.name} en {store.city}")
     else:
         print(f"An error occurred when adding store: {response.text}")
@@ -67,7 +67,7 @@ for price in prices.itertuples():
 
     if response.status_code == 400:
         print(f"Price has already assigned.")
-    elif response.ok:
+    elif response.status_code == 200:
         print(f"Price added.")
     else:
         print(f"An error occurred when assigning price: {response.text}")

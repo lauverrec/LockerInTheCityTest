@@ -17,7 +17,7 @@ def get_db():
         db.close()
 
 # Endpoint for adding a new product
-@app.post("/products/", response_model=schemas.Product)
+@app.post("/products", response_model=schemas.Product)
 def create_product(product: schemas.ProductCreate, db: Session = Depends(get_db)):
     product_db = db.query(models.Product).filter(
         models.Product.brand == product.brand,
@@ -53,7 +53,7 @@ def update_product(product_id: int, product: schemas.ProductUpdate, db: Session 
     )
 
 # Endpoint for adding a new store
-@app.post("/stores/", response_model=schemas.Store)
+@app.post("/stores", response_model=schemas.Store)
 def create_store(store: schemas.StoreCreate, db: Session = Depends(get_db)):
     store_db = db.query(models.Store).filter(
         models.Store.name == store.name,
@@ -70,7 +70,7 @@ def create_store(store: schemas.StoreCreate, db: Session = Depends(get_db)):
     return new_store
 
 # Endpoint for assigning a price to a product in a store
-@app.post("/prices/")
+@app.post("/prices")
 def create_price(price_data: schemas.PriceCreate, db: Session = Depends(get_db)):
     # Search the product
     product_db = db.query(models.Product).filter(
