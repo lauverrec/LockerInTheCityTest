@@ -1,3 +1,3 @@
-id,brand,type,caloric_value,saturated_fats,sugar
+id,brand,product_type,caloric_value,saturated_fats,sugar
 1,BrandA,Snack,150,10,5
 2,BrandB,Drink,200,0,25

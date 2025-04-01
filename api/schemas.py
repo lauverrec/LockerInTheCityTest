@@ -3,7 +3,7 @@ from pydantic import BaseModel
 # Schemas para Product
 class ProductBase(BaseModel):
     brand: str
-    type: str
+    product_type: str
     caloric_value: int
     saturated_fats: float
     sugar: float

@@ -13,20 +13,21 @@ for product in products.itertuples():
     
     payload = {
         "brand": product.brand,
-        "type": product.type,
+        "product_type": product.product_type,
         "caloric_value": product.caloric_value,
         "saturated_fats": product.saturated_fats,
         "sugar": product.sugar
     }
 
     #call API
-    response = requests.post("http://127.0.0.1:8000/products", json=payload, headers=HEADERS)
+    response = requests.post(f"{URL_BASE}/products", json=payload, headers=HEADERS)
 
-    if response.status_code == 201:
-        print("POST realizado correctamente. Respuesta:")
-        print(response.json())
+    if response.status_code == 400:
+        print(f"The product already exists: {product.brand} {product.product_type}")
+    elif response.status_code == 201:
+        print(f"Product added: {product.brand} {product.product_type}")
     else:
-        print(f"Error en la petición POST: {response.status_code}")
+        print(f"An error occurred when adding product: {response.text}")
 
 #Stores
 stores = pd.read_csv("stores.csv")
@@ -41,13 +42,14 @@ for store in stores.itertuples():
     }
 
     #call API
-    response = requests.post("http://127.0.0.1:8000/stores", json=payload, headers=HEADERS)
+    response = requests.post(f"{URL_BASE}/stores", json=payload, headers=HEADERS)
 
-    if response.status_code == 201:
-        print("POST realizado correctamente. Respuesta:")
-        print(response.json())
+    if response.status_code == 400:
+        print(f"The store already exists: {store.name} en {store.city}")
+    elif response.status_code == 201:
+        print(f"Store added: {store.name} en {store.city}")
     else:
-        print(f"Error en la petición POST: {response.status_code}")
+        print(f"An error occurred when adding store: {response.text}")
 
 #Prices
 prices = pd.read_csv("prices.csv")
@@ -61,10 +63,11 @@ for price in prices.itertuples():
     }
 
     #call API
-    response = requests.post("http://127.0.0.1:8000/prices", json=payload, headers=HEADERS)
+    response = requests.post(f"{URL_BASE}/prices", json=payload, headers=HEADERS)
 
-    if response.status_code == 201:
-        print("POST realizado correctamente. Respuesta:")
-        print(response.json())
+    if response.status_code == 400:
+        print(f"Price has already assigned.")
+    elif response.ok:
+        print(f"Price added.")
     else:
-        print(f"Error en la petición POST: {response.status_code}")
+        print(f"An error occurred when assigning price: {response.text}")

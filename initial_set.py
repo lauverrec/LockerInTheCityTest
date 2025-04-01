@@ -1,8 +1,8 @@
 import pandas as pd 
 
 products = [
-    {"id": 1, "brand": "BrandA", "type": "Snack", "caloric_value": 150, "saturated_fats": 10, "sugar": 5},
-    {"id": 2, "brand": "BrandB", "type": "Drink", "caloric_value": 200, "saturated_fats": 0, "sugar": 25},
+    {"id": 1, "brand": "BrandA", "product_type": "Snack", "caloric_value": 150, "saturated_fats": 10, "sugar": 5},
+    {"id": 2, "brand": "BrandB", "product_type": "Drink", "caloric_value": 200, "saturated_fats": 0, "sugar": 25},
 ]
 
 stores = [

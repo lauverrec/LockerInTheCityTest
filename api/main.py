@@ -1,14 +1,14 @@
 from fastapi import FastAPI, HTTPException, Depends
 from sqlalchemy.orm import Session
-from database1 import SessionLocal, engine, Base
+from databaseConnection import SessionLocal, engine, Base
 import models, schemas
 
-# Crear las tablas en la base de datos
+# Create the tables in the database
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
-# Dependencia para obtener la sesión de la base de datos
+# Get the database session
 def get_db():
     db = SessionLocal()
     try:
@@ -16,52 +16,107 @@ def get_db():
     finally:
         db.close()
 
-# Endpoint para agregar un nuevo producto
-@app.post("/products", response_model=schemas.Product)
+# Endpoint for adding a new product
+@app.post("/products/", response_model=schemas.Product)
 def create_product(product: schemas.ProductCreate, db: Session = Depends(get_db)):
-    db_product = models.Product(**product.dict())
-    db.add(db_product)
-    db.commit()
-    db.refresh(db_product)
-    return db_product
+    product_db = db.query(models.Product).filter(
+        models.Product.brand == product.brand,
+        models.Product.product_type == product.product_type
+    ).first()
 
-# Endpoint para actualizar un producto existente
-@app.put("/products/{product_id}", response_model=schemas.Product)
+    if product_db:
+        raise HTTPException(status_code=400, detail="The product has already created")
+    
+    new_product = models.Product(**product.dict())
+    db.add(new_product)
+    db.commit()
+    db.refresh(new_product)
+    return new_product
+
+# Endpoint for updating a product
+@app.put("/products/{product_id}", response_model=schemas.ProductCreate)
 def update_product(product_id: int, product: schemas.ProductUpdate, db: Session = Depends(get_db)):
     db_product = db.query(models.Product).filter(models.Product.id == product_id).first()
     if not db_product:
-        raise HTTPException(status_code=404, detail="Product not found")
-    for key, value in product.dict().items():
-        setattr(db_product, key, value)
+        raise HTTPException(status_code=404, detail="Producto no encontrado")
+    db_product.caloric_value = product.caloric_value
+    db_product.saturated_fats = product.saturated_fats
+    db_product.sugar = product.sugar
     db.commit()
     db.refresh(db_product)
-    return db_product
+    return schemas.ProductCreate(
+        brand=db_product.brand,
+        product_type=db_product.product_type,
+        caloric_value=db_product.caloric_value,
+        saturated_fats=float(db_product.saturated_fats),
+        sugar=float(db_product.sugar)
+    )
 
-# Endpoint para agregar un nuevo establecimiento
+# Endpoint for adding a new store
 @app.post("/stores/", response_model=schemas.Store)
 def create_store(store: schemas.StoreCreate, db: Session = Depends(get_db)):
-    db_store = models.Store(**store.dict())
-    db.add(db_store)
+    store_db = db.query(models.Store).filter(
+        models.Store.name == store.name,
+        models.Store.city == store.city
+    ).first()
+    
+    if store_db:
+        raise HTTPException(status_code=400, detail="This store has already created in this city")
+    
+    new_store = models.Store(**store.dict())
+    db.add(new_store)
     db.commit()
-    db.refresh(db_store)
-    return db_store
+    db.refresh(new_store)
+    return new_store
 
-# Endpoint para asignar un precio a un producto en un establecimiento
-@app.post("/prices/", response_model=schemas.Price)
-def create_price(price: schemas.PriceCreate, db: Session = Depends(get_db)):
-    db_price = models.Price(**price.dict())
-    db.add(db_price)
-    db.commit()
-    db.refresh(db_price)
-    return db_price
+# Endpoint for assigning a price to a product in a store
+@app.post("/prices/")
+def create_price(price_data: schemas.PriceCreate, db: Session = Depends(get_db)):
+    # Search the product
+    product_db = db.query(models.Product).filter(
+        models.Product.id == price_data.product_id
+    ).first()
 
-# Endpoint para obtener todos los productos de un establecimiento
+    if not product_db:
+        raise HTTPException(status_code=404, detail="Product not found")
+    
+    # Search the store
+    store_db = db.query(models.Store).filter(
+        models.Store.id == price_data.store_id
+    ).first()
+
+    if not store_db:
+        raise HTTPException(status_code=404, detail="Store not found")
+    
+    price_db = db.query(models.Price).filter(
+        models.Price.product_id == product_db.id,
+        models.Price.store_id == store_db.id
+    ).first()
+
+    if price_db:
+        if price_db.price != price_data.price:
+            price_db.price = price_data.price
+            db.commit()
+            db.refresh(price_db)
+        else:
+            raise HTTPException(status_code=400, detail="This price has already created to this product in this store")
+    else:
+        price = models.Price(product_id=price_data.product_id, store_id=price_data.store_id, price=price_data.price)
+        db.add(price)
+        db.commit()
+        db.refresh(price)
+    
+    return {"Price assign correctly"}
+
+# Endpoint for getting all products of a store
 @app.get("/stores/{store_id}/products", response_model=list[schemas.Product])
 def get_products_by_store(store_id: int, db: Session = Depends(get_db)):
-    # Se consulta la tabla de precios para obtener los productos asociados al establecimiento
-    prices = db.query(models.Price).filter(models.Price.store_id == store_id).all()
-    if not prices:
-        raise HTTPException(status_code=404, detail="Store not found or no products available")
-    product_ids = [p.product_id for p in prices]
-    products = db.query(models.Product).filter(models.Product.id.in_(product_ids)).all()
+    db_est = db.query(models.Store).filter(models.Store.id == store_id).first()
+    
+    if not db_est:
+        raise HTTPException(status_code=404, detail="Store not found")
+    
+    products = db.query(models.Product).join(models.Price, models.Product.id == models.Price.product_id)\
+                .filter(models.Price.store_id == store_id).all()
+    
     return products
